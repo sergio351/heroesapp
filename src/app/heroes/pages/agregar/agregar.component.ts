@@ -3,6 +3,9 @@ import { Publisher, Heroe } from '../../interface/heroes.interface';
 import { HeroesService } from '../../services/heroes.service';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmarComponent } from '../../components/confirmar/confirmar.component';
 
 
 @Component({
@@ -38,7 +41,9 @@ export class AgregarComponent implements OnInit {
 
   constructor(private heroesService: HeroesService,
               private activetdRoute :ActivatedRoute,
-              private router: Router ){ }
+              private router: Router ,
+              private snackBar: MatSnackBar,
+              private dialog: MatDialog){ }
 
   ngOnInit(): void {
 
@@ -58,12 +63,14 @@ export class AgregarComponent implements OnInit {
     }
 
     if(this.heroe.id){
-      this.heroesService.actualizarheroe(this.heroe).subscribe(heroe=>console.log('actualizando',heroe))
+      this.heroesService.actualizarheroe(this.heroe)
+      .subscribe(heroe=>this.mostrarsnackbar('Registro actualizando'));
 
     }else
     {
       this.heroesService.agregarheroe(this.heroe)
       .subscribe(heroe=>{this.router.navigate(['/heroes/editar',heroe.id]);
+      this.mostrarsnackbar('Registro creado');
 
     })
 
@@ -72,9 +79,30 @@ export class AgregarComponent implements OnInit {
   }
 
   borrarheroe(){
-    this.heroesService.borrarheroe(this.heroe.id!)
-    .subscribe(resp=>{
+    const dialog = this.dialog.open(ConfirmarComponent,{
+      width:'200px',
+      data:this.heroe,
+    });
+    dialog.afterClosed().subscribe(
+      (result)=>{
+          if (result)   {
+
+      this.heroesService.borrarheroe(this.heroe.id!)
+      .subscribe(resp=>{
         this.router.navigate(['/heroes']);
-    })
+      })
+
+          }
+
+
+        }
+    )
+
+  }
+
+  mostrarsnackbar(mensaje: string){
+this.snackBar.open(mensaje, 'ok',{
+  duration:2500
+})
   }
 }
